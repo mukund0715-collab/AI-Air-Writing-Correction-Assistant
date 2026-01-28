@@ -1,0 +1,134 @@
+{% extends "painter/base.html" %}
+{% load static %}
+
+{% block title %}Saved Documents{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto px-6 mt-10 pb-20">
+
+    <h2 class="text-3xl font-bold mb-8 text-center">Saved Documents</h2>
+
+    {% if files %}
+        <div class="space-y-4">
+            {% for file in files %}
+            <div id="card-{{ file.id }}" class="glass card-container relative overflow-visible p-5 rounded-xl flex justify-between items-center transition-all duration-200">
+
+                <div>
+                    <h3 class="text-xl font-semibold">{{ file.file_name }}</h3>
+                    <p class="text-sm opacity-70">Saved on: {{ file.created_at }}</p>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'view_file' file.id %}" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white text-sm">View</a>
+
+                    <div class="relative">
+                        <button onclick="toggleMenu('{{ file.id }}')" class="px-3 py-2 rounded-full hover:bg-gray-700 transition">⋮</button>
+
+                        <div id="menu-{{ file.id }}" class="hidden absolute right-0 mt-2 w-40 bg-gray-900 border border-gray-700 rounded-xl shadow-xl z-50">
+                            <a href="{% url 'download_file' file.id %}" class="block px-4 py-2 hover:bg-gray-700 rounded-t-xl">Download</a>
+                            
+                            <button onclick="openRenameModal('{{ file.file_name }}', '{% url 'rename_file' file.id %}')" 
+                                    class="block w-full text-left px-4 py-2 hover:bg-gray-700">
+                                Rename
+                            </button>
+
+                            <a href="{% url 'delete_file' file.id %}" class="block px-4 py-2 text-red-400 hover:bg-gray-700 rounded-b-xl">Delete</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-center text-gray-400 text-lg mt-6">No saved files found yet.</p>
+    {% endif %}
+
+</div>
+
+<div id="renameModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-[100]">
+    <div class="glass p-8 rounded-2xl w-full max-w-md mx-4 border border-gray-600">
+        
+        <h3 class="text-2xl font-bold mb-4 text-white">Rename File</h3>
+        
+        <form id="renameForm" method="POST" action="">
+            {% csrf_token %}
+            
+            <div class="mb-6">
+                <label class="block text-gray-400 text-sm mb-2">New Filename</label>
+                <input type="text" id="renameInput" name="new_name" 
+                       class="w-full bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeRenameModal()" 
+                        class="px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-700 transition">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition shadow-lg">
+                    Save Change
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// --- Existing Menu Logic ---
+function toggleMenu(id) {
+    const menu = document.getElementById("menu-" + id);
+    const card = document.getElementById("card-" + id);
+    const isHidden = menu.classList.contains("hidden");
+
+    document.querySelectorAll("[id^='menu-']").forEach(m => m.classList.add("hidden"));
+    document.querySelectorAll(".card-container").forEach(c => c.style.zIndex = "0");
+
+    if (isHidden) {
+        menu.classList.remove("hidden");
+        card.style.zIndex = "50"; 
+    } 
+}
+
+document.addEventListener("click", function(e) {
+    if (!e.target.closest(".relative") && !e.target.closest(".card-container")) {
+        document.querySelectorAll("[id^='menu-']").forEach(menu => menu.classList.add("hidden"));
+        document.querySelectorAll(".card-container").forEach(c => c.style.zIndex = "0");
+    }
+});
+
+// --- NEW: Modal Logic ---
+
+function openRenameModal(currentName, postUrl) {
+    // 1. Get elements
+    const modal = document.getElementById('renameModal');
+    const input = document.getElementById('renameInput');
+    const form = document.getElementById('renameForm');
+
+    // 2. Pre-fill the input with current name
+    input.value = currentName;
+
+    // 3. Set the form action to the correct Django URL
+    form.action = postUrl;
+
+    // 4. Show modal
+    modal.classList.remove('hidden');
+    
+    // 5. Close the dropdown menu
+    document.querySelectorAll("[id^='menu-']").forEach(m => m.classList.add("hidden"));
+    document.querySelectorAll(".card-container").forEach(c => c.style.zIndex = "0");
+}
+
+function closeRenameModal() {
+    document.getElementById('renameModal').classList.add('hidden');
+}
+
+// Close modal if clicking outside the glass box
+document.getElementById('renameModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeRenameModal();
+    }
+});
+</script>
+
+{% endblock %}
