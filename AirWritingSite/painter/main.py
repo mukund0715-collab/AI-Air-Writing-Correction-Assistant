@@ -19,7 +19,7 @@ def correct_sentence_with_gemini(sentence: str) -> str:
     try:
         import google.generativeai as genai
 
-        genai.configure(api_key="AIzaSyBTJuVKTH1pA_XLcyiIE7z5hIFRaCLaHdk")
+        genai.configure(api_key="YOUR_GEMINI_KEY")
         model = genai.GenerativeModel("gemini-2.5-flash-lite") 
 
         prompt = (
@@ -328,4 +328,5 @@ def main():
         print("\nSession saved.\n")
 
 if __name__ == "__main__":
+
     main()
